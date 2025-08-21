@@ -1,9 +1,9 @@
 from fastapi import FastAPI, UploadFile, File
 import shutil
 import os
+from typing import List
 
 app = FastAPI()
-
 UPLOAD_DIRECTORY = "./files"
 os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
 
@@ -13,20 +13,26 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.post("/uploadfile/")
-async def create_upload_file(file: UploadFile = File(...)):
+@app.post("/uploadfiles/")
+async def create_upload_files(files: List[UploadFile] = File(...)):
     """
-    file: 입략받을 파일
-    처음에는 단수로 받아 테스트 한 후, 추후에 복수로 변경해야함.
-    변수명도 복수형으로 변경할 것.
+    여러 개의 파일을 한 번에 업로드하여 서버에 저장합니다.
     """
-    try:
-        file_path = os.path.join(UPLOAD_DIRECTORY, file.filename)
-        
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+    uploaded_filenames = []
+    
+    for file in files:
+        try:
+            file_path = os.path.join(UPLOAD_DIRECTORY, file.filename)
             
-    finally:
-        file.file.close()
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            uploaded_filenames.append(file.filename)
+            
+        finally:
+            file.file.close()
 
-    return {"filename": file.filename, "message": "파일이 성공적으로 업로드되었습니다."}
+    return {
+        "message": f"{len(uploaded_filenames)}개의 파일이 성공적으로 업로드되었습니다.",
+        "filenames": uploaded_filenames
+    }
