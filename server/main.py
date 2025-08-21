@@ -4,17 +4,11 @@ import os
 import psycopg2
 from typing import List
 
+from db_config import POSTGRES_DB
+
 app = FastAPI()
 UPLOAD_DIRECTORY = "./files"
 os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
-
-POSTGRES_DB = {
-    "dbname": "knowledgefind",
-    "user": "okdoittttt",
-    "host": "127.0.0.1",
-    "port": "5432",
-}
-
 
 def create_table():
     try:
