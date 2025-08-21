@@ -24,19 +24,18 @@ export default function DragAndDrop() {
     setIsDragging(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
     setFiles(droppedFiles);
-    setUploadStatus(''); // 파일이 드롭되면 상태 초기화
+    setUploadStatus('');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
       setFiles(selectedFiles);
-      setUploadStatus(''); // 파일이 선택되면 상태 초기화
+      setUploadStatus('');
     }
   };
   
-  // 업로드 로직은 그대로 유지
-  const uploadFiles = async () => {
+const uploadFiles = async () => {
     if (files.length === 0) {
         setUploadStatus('업로드할 파일이 없습니다.');
         return;
@@ -44,13 +43,15 @@ export default function DragAndDrop() {
 
     const formData = new FormData();
     files.forEach(file => {
-      formData.append('file', file);
+      // 서버의 복수형 매개변수 이름인 'files'와 일치시켜야 합니다.
+      formData.append('files', file); 
     });
 
     setUploadStatus('파일 업로드 중...');
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/uploadfile/', {
+      // 서버의 복수형 엔드포인트 URL로 변경
+      const response = await fetch('http://127.0.0.1:8000/uploadfiles/', {
         method: 'POST',
         body: formData,
       });
@@ -59,7 +60,7 @@ export default function DragAndDrop() {
         const result = await response.json();
         setUploadStatus(`성공: ${result.message}`);
         console.log('업로드 성공:', result);
-        setFiles([]); // 성공 시 파일 목록 초기화
+        setFiles([]);
       } else {
         const errorText = await response.text();
         setUploadStatus(`실패: ${errorText}`);
