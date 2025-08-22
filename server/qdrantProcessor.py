@@ -79,13 +79,3 @@ class QdrantProcessor:
             print(f"오류: '{filename}' 파일을 찾을 수 없습니다.")
         except Exception as e:
             print(f"처리 중 오류 발생: {e}")
-
-# --- 클래스 사용 예제 ---
-if __name__ == "__main__":
-    processor = QdrantProcessor()
-    
-    # 예제 파일 경로
-    test_file_path = "./files/korean.pdf"
-    
-    # QdrantProcessor를 사용하여 파일 처리
-    processor.process_document(test_file_path)

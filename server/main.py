@@ -5,6 +5,7 @@ import psycopg2
 from typing import List
 
 from db_config import POSTGRES_DB
+from qdrantProcessor import QdrantProcessor
 
 app = FastAPI()
 UPLOAD_DIRECTORY = "./files"
@@ -27,9 +28,10 @@ def create_table():
         print(f"PostgreSQL 테이블 생성 오류: {error}")
 
 
-@app.on_event("startup")
-async def startup_event():
-    create_table()
+# reload 될 때 마다 테이블을 확인할 필요가 없으므로 임시 주석 처리.
+# @app.on_event("startup")
+# async def startup_event():
+#     create_table()
 
 
 @app.get("/")
@@ -40,6 +42,8 @@ def read_root():
 @app.post("/uploadfiles/")
 async def create_upload_files(files: List[UploadFile] = File(...)):
     uploaded_filenames = []
+    qdrant_processor = QdrantProcessor()
+
     try:
         with psycopg2.connect(**POSTGRES_DB) as conn:
             with conn.cursor() as cursor:
@@ -48,6 +52,10 @@ async def create_upload_files(files: List[UploadFile] = File(...)):
                     file_path = os.path.join(UPLOAD_DIRECTORY, file.filename)
                     with open(file_path, "wb") as buffer:
                         shutil.copyfileobj(file.file, buffer)
+                    
+                    # Qdrant 저장{
+                    _file_name = './files/' + file.filename
+                    qdrant_processor.process_document(_file_name)
 
                     # DB 저장
                     cursor.execute(
