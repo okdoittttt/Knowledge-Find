@@ -2,6 +2,8 @@ from unstructured.partition.auto import partition
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient, models
 import re
+import uuid
+# import hashlib
 
 class QdrantProcessor:
     def __init__(self, qdrant_host: str = "localhost", qdrant_port: int = 6333):
@@ -44,22 +46,22 @@ class QdrantProcessor:
             embeddings = self.model.encode(words)
             vector_size = embeddings.shape[1]
 
-            # 3. 컬랙션 생성 및 업데이트
-            if self.qdrant_client.collection_exists(self.collection_name):
-                self.qdrant_client.delete_collection(self.collection_name)
-            
-            self.qdrant_client.create_collection(
-                collection_name=self.collection_name,
-                vectors_config=models.VectorParams(
-                    size=vector_size,
-                    distance=models.Distance.COSINE
+
+            # 3. 컬렉션이 존재하지 않으면 새로 생성
+            if not self.qdrant_client.collection_exists(self.collection_name):
+                print(f"'{self.collection_name}' 컬렉션이 없어 새로 생성합니다.") # <<<======== delete_collection() 삭제 했는데 왜 계속 컬렉션이 새로 생성되는거지????????????????
+                self.qdrant_client.create_collection(
+                    collection_name=self.collection_name,
+                    vectors_config=models.VectorParams(
+                        size=vector_size,
+                        distance=models.Distance.COSINE
+                    )
                 )
-            )
             
             # 4. 데이터 업로드
             points_to_upload = [
                 models.PointStruct(
-                    id=idx,
+                    id=str(uuid.uuid4()), # id값이 0부터 시작하면 데이터가 덮어써지는 문제가 발생한다. 고유한 ID를 생성하도록 수정.
                     vector=embedding.tolist(),
                     payload={"word": words[idx], "filename": filename}
                 )
@@ -83,7 +85,7 @@ if __name__ == "__main__":
     processor = QdrantProcessor()
     
     # 예제 파일 경로
-    test_file_path = "./files/testpdf.pdf"
+    test_file_path = "./files/korean.pdf"
     
     # QdrantProcessor를 사용하여 파일 처리
     processor.process_document(test_file_path)
