@@ -43,14 +43,12 @@ const uploadFiles = async () => {
 
     const formData = new FormData();
     files.forEach(file => {
-      // 서버의 복수형 매개변수 이름인 'files'와 일치시켜야 합니다.
       formData.append('files', file); 
     });
 
     setUploadStatus('파일 업로드 중...');
 
     try {
-      // 서버의 복수형 엔드포인트 URL로 변경
       const response = await fetch('http://127.0.0.1:8000/uploadfiles/', {
         method: 'POST',
         body: formData,
@@ -120,7 +118,7 @@ const uploadFiles = async () => {
             >
               업로드 시작
             </button>
-            {/* 초기화 버튼 추가 */}
+            {/* 초기화 버튼 */}
             <button
               onClick={resetFiles}
               className="px-6 py-2 text-gray-800 bg-gray-300 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200"
