@@ -6,6 +6,8 @@ from typing import List
 
 from db_config import POSTGRES_DB
 from qdrantProcessor import QdrantProcessor
+from searchEngine import SearchEngine
+from searchEngine import SearchRequest
 
 app = FastAPI()
 UPLOAD_DIRECTORY = "./files"
@@ -81,3 +83,16 @@ async def create_upload_files(files: List[UploadFile] = File(...)):
         "message": f"{len(uploaded_filenames)}개의 파일이 성공적으로 업로드되었습니다.",
         "filenames": uploaded_filenames
     }
+
+# 이유는 모르겠지만 해당 객체를 search_document() 안에 선언하면 모델 에러가 발생함
+# 아마 SearchEngine.search_vectors()로 선언하면 정적 메서드 취급을 하는 것 같음.
+# 그렇다면 호출할 때 마다 클래스의 인스턴스를 새롭게 호출하게 됨 ???? ===>>>> 뒤로가기, Queue적용하면 문제가 생기지 않을까?
+search_engine = SearchEngine()
+
+@app.post("/search")
+async def search_document(request: SearchRequest):
+    '''
+    Qdrant에 키워드를 검색하여 유사한 단어를 반환
+    '''
+    results = search_engine.search_vectors(request.query, request.limit)
+    return results

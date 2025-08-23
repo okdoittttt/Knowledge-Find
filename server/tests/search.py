@@ -38,3 +38,4 @@ search_similar_vectors(search_query)
 print("\n--- 다른 검색 예제 ---")
 search_query = "2022"
 search_similar_vectors(search_query)
+
