@@ -4,10 +4,11 @@ import os
 import psycopg2
 from typing import List
 
-from db_config import POSTGRES_DB
-from qdrantProcessor import QdrantProcessor
-from searchEngine import SearchEngine
-from searchEngine import SearchRequest
+from repository.db_config import POSTGRES_DB
+from repository.qdrantProcessor import QdrantProcessor
+from search_engine.searchEngine import SearchEngine
+from search_engine.searchModel import SearchRequest
+
 
 app = FastAPI()
 UPLOAD_DIRECTORY = "./files"

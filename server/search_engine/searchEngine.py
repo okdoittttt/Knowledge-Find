@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 import os
@@ -41,11 +40,3 @@ class SearchEngine:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Search failed: {e}")
 
-
-
-class SearchRequest(BaseModel):
-    '''
-    API 요청을 의한 데이터 모델
-    '''
-    query: str
-    limit: int = 5
