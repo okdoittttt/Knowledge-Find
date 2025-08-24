@@ -1,4 +1,7 @@
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import os
 import psycopg2
@@ -13,6 +16,21 @@ from search_engine.searchModel import SearchRequest
 app = FastAPI()
 UPLOAD_DIRECTORY = "./files"
 os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
+
+# 
+origins = [
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"], # OPTIONS 메서드 포함 모든 HTTP 메서드 허용
+    allow_headers=["*"], # 모든 헤더 허용
+)
+# 
 
 def create_table():
     try:
@@ -97,3 +115,16 @@ async def search_document(request: SearchRequest):
     '''
     results = search_engine.search_vectors(request.query, request.limit)
     return results
+
+
+@app.get("/download/files/{filename}")
+def download_file(filename: str):
+    '''
+    클라이언트 요청에 따른 파일을 반환
+    '''
+    file_path = f"files/{filename}"
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(file_path, media_type='application/octet-stream', filename=filename)
