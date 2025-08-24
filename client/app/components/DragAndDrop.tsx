@@ -77,7 +77,7 @@ const uploadFiles = async () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-gray-100 rounded-lg shadow-md">
+    <div className="flex flex-col items-center justify-center p-6 bg-gray-100 rounded-lg shadow-md border border-black">
       <div
         className={`w-full max-w-md p-8 text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200 
           ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-400 bg-white'}`}
@@ -110,7 +110,7 @@ const uploadFiles = async () => {
               </li>
             ))}
           </ul>
-   <div className="flex justify-center space-x-4 mt-4">
+          <div className="flex justify-center space-x-4 mt-4">
             {/* 업로드 버튼 */}
             <button
               onClick={uploadFiles}

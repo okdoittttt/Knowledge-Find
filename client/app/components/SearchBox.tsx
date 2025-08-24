@@ -58,7 +58,18 @@ export default function SearchBox() {
       const result = await response.json();
       console.log('API 호출 성공:', result);
       setSearchResults(result.results); // API 호출 성공 후 상태 업데이트
-      // setSearchTerm(''); // 검색창 초기화
+
+      if (result.results && result.results.length === 0) {
+        setSearchResults([
+          {
+            word: "일치하는 데이터가 없습니다.",
+            score: 0,
+            filename: "",
+          }
+        ]);
+      } else {
+        setSearchResults(result.results)
+      }
       
     } catch (error) {
       console.error('API 호출 실패:', error);
@@ -69,9 +80,9 @@ export default function SearchBox() {
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center min-h-screen pt-20">
       {/* 검색창 */}
-      <div className="w-[500%] relative">
+      <div className="w-[300%] relative border border-black rounded-lg shadow-md">
         <div className="relative flex items-center">
           <Image
             src="/assets/glass.png"
@@ -103,14 +114,13 @@ export default function SearchBox() {
           </button>
         </div>
       </div>
-
+<br></br><br></br><br></br>
       {/* 검색 결과 */}
-      <div className="mt-8 w-full max-w-2xl">
+      <div className="w-[450%] relative">
         {isLoading ? (
-          <p className="text-center text-gray-500">검색 중...</p>
+          <p className="text-center text-black">검색 중...</p>
         ) : searchResults.length > 0 ? (
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">검색 결과</h2>
             <div className="space-y-4">
               {searchResults.map((item, index) => (
                 <div
@@ -121,15 +131,15 @@ export default function SearchBox() {
                   <p className="text-sm text-gray-500">
                     유사도: {item.score.toFixed(4)}
                   </p>
-                  <p className="text-sm text-gray-500">파일: {item.filename}
+                  <p className="text-sm text-gray-500 flex justify-between items-center">
+                    <span>파일: {item.filename}</span>
                     <a
                       href={`http://127.0.0.1:8000/download/${item.filename}`}
-                      className="ml-2 text-blue-500 hover:underline"
+                      className="text-blue-500 hover:underline"
                       download
                     >
                       (다운로드)
                     </a>
-
                   </p>
                 </div>
               ))}
@@ -141,5 +151,4 @@ export default function SearchBox() {
       </div>
     </div>
   );
-
 }
