@@ -8,6 +8,7 @@ import psycopg2
 from typing import List
 
 from repository.db_config import POSTGRES_DB
+from repository.filesUploader import FileUploader
 from repository.qdrantProcessor import QdrantProcessor
 from search_engine.searchEngine import SearchEngine
 from search_engine.searchModel import SearchRequest
@@ -16,12 +17,18 @@ from search_engine.searchModel import SearchRequest
 app = FastAPI()
 UPLOAD_DIRECTORY = "./files"
 os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
+# 이유는 모르겠지만 해당 객체를 search_document() 안에 선언하면 모델 에러가 발생함
+# 아마 SearchEngine.search_vectors()로 선언하면 정적 메서드 취급을 하는 것 같음.
+# 그렇다면 호출할 때 마다 클래스의 인스턴스를 새롭게 호출하게 됨 ???? ===>>>> 뒤로가기, Queue적용하면 문제가 생기지 않을까?
+search_engine = SearchEngine()
+file_handler = FileUploader()
 
-# 
+
 origins = [
     "http://127.0.0.1:3000",
     "http://localhost:3000",
 ]
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,7 +37,7 @@ app.add_middleware(
     allow_methods=["*"], # OPTIONS 메서드 포함 모든 HTTP 메서드 허용
     allow_headers=["*"], # 모든 헤더 허용
 )
-# 
+
 
 def create_table():
     try:
@@ -61,52 +68,12 @@ def read_root():
 
 
 @app.post("/uploadfiles/")
-async def create_upload_files(files: List[UploadFile] = File(...)):
-    uploaded_filenames = []
-    qdrant_processor = QdrantProcessor()
+async def files_upload(files: List[UploadFile] = File(...)):
+    '''
+    데이터베이스에 파일을 업로드
+    '''
+    return await file_handler.create_upload_files(files)
 
-    try:
-        with psycopg2.connect(**POSTGRES_DB) as conn:
-            with conn.cursor() as cursor:
-                for file in files:
-                    # 파일 저장
-                    file_path = os.path.join(UPLOAD_DIRECTORY, file.filename)
-                    with open(file_path, "wb") as buffer:
-                        shutil.copyfileobj(file.file, buffer)
-                    
-                    # Qdrant 저장{
-                    _file_name = './files/' + file.filename
-                    qdrant_processor.process_document(_file_name)
-
-                    # DB 저장
-                    cursor.execute(
-                        "INSERT INTO public.uploaded_files (filename) VALUES (%s);",
-                        (file.filename,)
-                    )
-                    print(f"INSERT rowcount={cursor.rowcount}")
-                    uploaded_filenames.append(file.filename)
-
-                conn.commit()
-                print(f"{len(uploaded_filenames)}개의 파일명이 DB에 성공적으로 저장되었습니다.")
-
-                # 마지막으로 삽입된 데이터 확인 (디버깅용)
-                cursor.execute("SELECT id, filename, upload_time FROM public.uploaded_files ORDER BY id DESC LIMIT 1;")
-                last_row = cursor.fetchone()
-                print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>최근 저장된 행:", last_row)
-
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"데이터베이스 오류: {error}")
-        return {"message": "파일 업로드 중 데이터베이스 오류가 발생했습니다."}
-
-    return {
-        "message": f"{len(uploaded_filenames)}개의 파일이 성공적으로 업로드되었습니다.",
-        "filenames": uploaded_filenames
-    }
-
-# 이유는 모르겠지만 해당 객체를 search_document() 안에 선언하면 모델 에러가 발생함
-# 아마 SearchEngine.search_vectors()로 선언하면 정적 메서드 취급을 하는 것 같음.
-# 그렇다면 호출할 때 마다 클래스의 인스턴스를 새롭게 호출하게 됨 ???? ===>>>> 뒤로가기, Queue적용하면 문제가 생기지 않을까?
-search_engine = SearchEngine()
 
 @app.post("/search")
 async def search_document(request: SearchRequest):
@@ -115,6 +82,20 @@ async def search_document(request: SearchRequest):
     '''
     results = search_engine.search_vectors(request.query, request.limit)
     return results
+
+
+@app.post("/searchImage")
+async def search(query: str):
+    """
+    파일을 받아 Qdrant에서 유사한 단어 및 파일을 검색합니다.
+    """
+    try:
+        results = search_engine.search_image_vectors(query)
+        return results
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"잘못된 파일 접근 혹은 문서오류: {e}")
 
 
 @app.get("/download/files/{filename}")
@@ -128,3 +109,4 @@ def download_file(filename: str):
         raise HTTPException(status_code=404, detail="File not found")
     
     return FileResponse(file_path, media_type='application/octet-stream', filename=filename)
+
