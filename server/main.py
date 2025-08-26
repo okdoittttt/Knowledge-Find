@@ -17,9 +17,7 @@ from search_engine.searchModel import SearchRequest
 app = FastAPI()
 UPLOAD_DIRECTORY = "./files"
 os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
-# 이유는 모르겠지만 해당 객체를 search_document() 안에 선언하면 모델 에러가 발생함
-# 아마 SearchEngine.search_vectors()로 선언하면 정적 메서드 취급을 하는 것 같음.
-# 그렇다면 호출할 때 마다 클래스의 인스턴스를 새롭게 호출하게 됨 ???? ===>>>> 뒤로가기, Queue적용하면 문제가 생기지 않을까?
+# FastAPI의 Dependency Injection (Depends) 방식으로 SearchEngine을 요청 단위로 관리하는 방법으로 코드를 변경하는 것이 좋아보임.
 search_engine = SearchEngine()
 file_handler = FileUploader()
 
@@ -37,29 +35,6 @@ app.add_middleware(
     allow_methods=["*"], # OPTIONS 메서드 포함 모든 HTTP 메서드 허용
     allow_headers=["*"], # 모든 헤더 허용
 )
-
-
-def create_table():
-    try:
-        with psycopg2.connect(**POSTGRES_DB) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS public.uploaded_files (
-                        id SERIAL PRIMARY KEY,
-                        filename VARCHAR(255) NOT NULL,
-                        upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
-                conn.commit()
-                print("테이블이 성공적으로 생성되었거나 이미 존재합니다.")
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"PostgreSQL 테이블 생성 오류: {error}")
-
-
-# reload 될 때 마다 테이블을 확인할 필요가 없으므로 임시 주석 처리.
-# @app.on_event("startup")
-# async def startup_event():
-#     create_table()
 
 
 @app.get("/")
@@ -80,22 +55,8 @@ async def search_document(request: SearchRequest):
     '''
     Qdrant에 키워드를 검색하여 유사한 단어를 반환
     '''
-    results = search_engine.search_vectors(request.query, request.limit)
+    results = search_engine.search_hybrid(request.query, request.limit)
     return results
-
-
-@app.post("/searchImage")
-async def search(query: str):
-    """
-    파일을 받아 Qdrant에서 유사한 단어 및 파일을 검색합니다.
-    """
-    try:
-        results = search_engine.search_image_vectors(query)
-        return results
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"잘못된 파일 접근 혹은 문서오류: {e}")
 
 
 @app.get("/download/files/{filename}")
