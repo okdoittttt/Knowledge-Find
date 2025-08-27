@@ -13,7 +13,7 @@ class SearchEngine:
         self.model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
         self.collection_name = "my_word_collection"
     
-    def search_hybrid(self, query_text: str, limit: int = 50):
+    def search_hybrid(self, query_text: str, limit: int = 100):
         '''
         하이브리드 검색 (벡터 검색 + 키워드 검색)
         '''
@@ -68,3 +68,4 @@ class SearchEngine:
         
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Hybrid search failed: {e}")
+
