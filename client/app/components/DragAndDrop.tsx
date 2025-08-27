@@ -1,5 +1,3 @@
-// components/DragAndDrop.tsx
-
 'use client';
 
 import { useState } from 'react';
@@ -119,12 +117,12 @@ const uploadFiles = async () => {
               업로드
             </button>
             {/* 검색 버튼 */}
-            <button
+            {/* <button
               onClick={resetFiles}
               className="px-6 py-2 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200"
             >
               검색
-            </button>
+            </button> */}
             {/* 초기화 버튼 */}
             <button
               onClick={resetFiles}

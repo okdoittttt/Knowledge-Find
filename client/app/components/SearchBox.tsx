@@ -79,10 +79,15 @@ export default function SearchBox() {
     }
   };
 
+  const getFilenameOnly = (fullPath: String): string => {
+    const parts = fullPath.split('/');
+    return parts[parts.length-1];
+  }
+
   return (
     <div className="flex flex-col items-center min-h-screen pt-20">
       {/* 검색창 */}
-      <div className="w-[300%] relative border border-black rounded-lg shadow-md">
+      <div className="w-[550px] relative border border-black rounded-lg shadow-md">
         <div className="relative flex items-center">
           <Image
             src="/assets/glass.png"
@@ -114,11 +119,14 @@ export default function SearchBox() {
           </button>
         </div>
       </div>
-<br></br><br></br><br></br>
+      <br /><br /><br />
       {/* 검색 결과 */}
-      <div className="w-[450%] relative">
+      <div className="w-[600px] relative">
         {isLoading ? (
-          <p className="text-center text-black">검색 중...</p>
+          <div className="flex justify-center items-center">
+            {/* Tailwind CSS를 사용한 원형 로딩 스피너 */}
+            <div className="w-8 h-8 rounded-full border-4 border-t-4 border-gray-200 border-t-blue-500 animate-spin"></div>
+          </div>
         ) : searchResults.length > 0 ? (
           <div>
             <div className="space-y-4">
@@ -127,15 +135,15 @@ export default function SearchBox() {
                   key={index}
                   className="p-4 border border-gray-200 rounded-lg shadow-sm bg-white"
                 >
-                  <p className="text-gray-700 font-medium">단어: {item.word}</p>
+                  <p className="text-gray-700 font-medium">파일: {getFilenameOnly(item.filename)}</p>
                   <p className="text-sm text-gray-500">
                     유사도: {item.score.toFixed(4)}
                   </p>
-                  <p className="text-sm text-gray-500 flex justify-between items-center">
-                    <span>파일: {item.filename}</span>
+                  <p className="text-sm text-gray-500 flex justify-between items-center break-words">
+                    <span className="break-all">유사단어: {item.word}</span>
                     <a
                       href={`http://127.0.0.1:8000/download/${item.filename}`}
-                      className="text-blue-500 hover:underline"
+                      className="text-blue-500 hover:underline ml-2 flex-shrink-0"
                       download
                     >
                       (다운로드)

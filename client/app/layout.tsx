@@ -1,6 +1,17 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Nanum_Gothic } from 'next/font/google';
 import "./globals.css";
+
+const nanumGothic = Nanum_Gothic({
+  // 나눔고딕 폰트의 서브셋을 설정합니다.
+  // 'korean'을 포함하여 한글을 지원하도록 합니다.
+  subsets: ['latin'],
+  // 사용할 폰트 두께를 명시합니다.
+  weight: ['400', '700', '800'],
+  // CSS 변수로 사용할 이름을 지정합니다.
+  variable: '--font-nanum-gothic',
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,12 +34,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+    <html lang="ko" className={nanumGothic.className}>
+      <body>{children}</body>
     </html>
   );
 }
